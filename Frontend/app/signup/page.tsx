@@ -1,78 +1,104 @@
-"use client"
+"use client";
 
-import React,{ useState } from "react"
-import Link from "next/link"
-import { BookOpen } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
-import { motion } from "framer-motion"
-import { useRouter } from "next/navigation"
-import { toast } from "sonner"
+import React, { useState } from "react";
+import Link from "next/link";
+import { BookOpen } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { RegisterRequest, RegisterResponse } from "@/types/form.types";
 
 export default function SignUpPage() {
-  const router = useRouter()
+  const router = useRouter();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     email: "",
     password: "",
     confirmPassword: "",
-    terms: false
-  })
-  const [isLoading, setIsLoading] = useState(false)
+    terms: false,
+  });
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value, type, checked } = e.target
-    setFormData(prev => ({
+    const { id, value, type, checked } = e.target;
+    setFormData((prev) => ({
       ...prev,
-      [id]: type === 'checkbox' ? checked : value
-    }))
-  }
+      [id]: type === "checkbox" ? checked : value,
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
+    e.preventDefault();
+
     if (formData.password !== formData.confirmPassword) {
-      toast.error("Passwords do not match")
-      return
+      toast.error("Passwords do not match");
+      return;
     }
 
     if (!formData.terms) {
-      toast.error("Please accept the terms and conditions")
-      return
+      toast.error("Please accept the terms and conditions");
+      return;
     }
 
     try {
-      setIsLoading(true)
-      const response = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: `${formData.firstName} ${formData.lastName}`,
-          email: formData.email,
-          password: formData.password,
-        }),
-      })
+      setIsLoading(true);
 
-      const data = await response.json()
+      const registerUser = async (
+        userData: RegisterRequest,
+      ): Promise<RegisterResponse> => {
+        const response = await fetch("http://127.0.0.1:4000/v1/auth/register", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(userData),
+        });
 
-      if (!response.ok) {
-        throw new Error(data.message || 'Registration failed')
-      }
+        let data;
+        try {
+          data = await response.json();
+        } catch {
+          throw new Error("Unexpected server response");
+        }
 
-      toast.success("Account created successfully!")
-      router.push('/login')
+        if (!response.ok) {
+          throw new Error(data?.message || "Registration failed");
+        }
+
+        return data;
+      };
+
+      const userData: RegisterRequest = {
+        name: `${formData.firstName} ${formData.lastName}`,
+        email: formData.email,
+        password: formData.password,
+      };
+
+      const response = await registerUser(userData);
+
+      toast.success("Account created successfully!");
+      router.push("/login");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to create account')
+      toast.error(
+        error instanceof Error ? error.message : "Failed to create account",
+      );
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50 p-4">
@@ -120,22 +146,26 @@ export default function SignUpPage() {
                 className="grid grid-cols-2 gap-4"
               >
                 <div className="space-y-2">
-                  <Label htmlFor="firstName" className="text-gray-700">First name</Label>
-                  <Input 
-                    id="firstName" 
-                    placeholder="Firstname" 
-                    required 
+                  <Label htmlFor="firstName" className="text-gray-700">
+                    First name
+                  </Label>
+                  <Input
+                    id="firstName"
+                    placeholder="Firstname"
+                    required
                     value={formData.firstName}
                     onChange={handleInputChange}
                     className="border-gray-200 focus:border-purple-500 focus:ring-purple-500 transition-all duration-200"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="lastName" className="text-gray-700">Last name</Label>
-                  <Input 
-                    id="lastName" 
-                    placeholder="Lastname" 
-                    required 
+                  <Label htmlFor="lastName" className="text-gray-700">
+                    Last name
+                  </Label>
+                  <Input
+                    id="lastName"
+                    placeholder="Lastname"
+                    required
                     value={formData.lastName}
                     onChange={handleInputChange}
                     className="border-gray-200 focus:border-purple-500 focus:ring-purple-500 transition-all duration-200"
@@ -149,11 +179,11 @@ export default function SignUpPage() {
                 className="space-y-2"
               >
                 <Label htmlFor="email" className="text-gray-700">Email</Label>
-                <Input 
-                  id="email" 
-                  type="email" 
-                  placeholder="example@example.com" 
-                  required 
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="example@example.com"
+                  required
                   value={formData.email}
                   onChange={handleInputChange}
                   className="border-gray-200 focus:border-purple-500 focus:ring-purple-500 transition-all duration-200"
@@ -165,11 +195,13 @@ export default function SignUpPage() {
                 transition={{ delay: 0.7 }}
                 className="space-y-2"
               >
-                <Label htmlFor="password" className="text-gray-700">Password</Label>
-                <Input 
-                  id="password" 
-                  type="password" 
-                  required 
+                <Label htmlFor="password" className="text-gray-700">
+                  Password
+                </Label>
+                <Input
+                  id="password"
+                  type="password"
+                  required
                   value={formData.password}
                   onChange={handleInputChange}
                   className="border-gray-200 focus:border-purple-500 focus:ring-purple-500 transition-all duration-200"
@@ -181,11 +213,13 @@ export default function SignUpPage() {
                 transition={{ delay: 0.8 }}
                 className="space-y-2"
               >
-                <Label htmlFor="confirmPassword" className="text-gray-700">Confirm Password</Label>
-                <Input 
-                  id="confirmPassword" 
-                  type="password" 
-                  required 
+                <Label htmlFor="confirmPassword" className="text-gray-700">
+                  Confirm Password
+                </Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  required
                   value={formData.confirmPassword}
                   onChange={handleInputChange}
                   className="border-gray-200 focus:border-purple-500 focus:ring-purple-500 transition-all duration-200"
@@ -197,18 +231,25 @@ export default function SignUpPage() {
                 transition={{ delay: 0.9 }}
                 className="flex items-center space-x-2"
               >
-                <Checkbox 
-                  id="terms" 
+                <Checkbox
+                  id="terms"
                   checked={formData.terms}
-                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, terms: checked as boolean }))}
-                  className="border-gray-200 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600" 
+                  onCheckedChange={(checked) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      terms: checked as boolean,
+                    }))}
+                  className="border-gray-200 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
                 />
                 <label
                   htmlFor="terms"
                   className="text-sm font-medium leading-none text-gray-700"
                 >
                   I agree to the{" "}
-                  <Link href="#" className="text-purple-600 hover:text-purple-700 hover:underline transition-colors">
+                  <Link
+                    href="#"
+                    className="text-purple-600 hover:text-purple-700 hover:underline transition-colors"
+                  >
                     terms and conditions
                   </Link>
                 </label>
@@ -220,7 +261,7 @@ export default function SignUpPage() {
                 whileTap={{ scale: 0.98 }}
                 className="w-full"
               >
-                <Button 
+                <Button
                   type="submit"
                   disabled={isLoading}
                   className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg transition-all duration-200"
@@ -237,7 +278,10 @@ export default function SignUpPage() {
             >
               <span className="text-sm text-gray-600">
                 Already have an account?{" "}
-                <Link href="/login" className="text-purple-600 hover:text-purple-700 hover:underline transition-colors">
+                <Link
+                  href="/login"
+                  className="text-purple-600 hover:text-purple-700 hover:underline transition-colors"
+                >
                   Log in
                 </Link>
               </span>
@@ -246,5 +290,5 @@ export default function SignUpPage() {
         </form>
       </motion.div>
     </div>
-  )
+  );
 }
