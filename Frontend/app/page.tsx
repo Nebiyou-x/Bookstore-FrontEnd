@@ -4,6 +4,7 @@ import  LandingPageClient  from "@/pages/landing"
 import { Product } from "@/types/product.types";
 import ProductListSec from "@/components/common/ProductListSec";
 import { Review } from "@/types/review.types";
+import TopNavbar from "@/components/layout/Navbar/TopNavbar";
 
 
 
@@ -208,7 +209,9 @@ export const reviewsData: Review[] = [
 
 export default async function Home() {
   return (
-  <LandingPageClient>
+    <>
+    <TopNavbar/>
+    {<LandingPageClient>
     
     <LandingHero/>
     <div className="mt-16 md:mt-24">
@@ -219,6 +222,10 @@ export default async function Home() {
       />
     </div>
     <TestimonialsSectionDemo/>
-   </LandingPageClient>
+   </LandingPageClient>}
+    </>
+   
+
+  
     );
 }

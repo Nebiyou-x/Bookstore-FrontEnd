@@ -1,45 +1,53 @@
-'use client';
+// app/admin/page.tsx
+import { StatsCard } from './components/stats-card';
+import { RecentOrders } from './components/recent-orders';
+import { SalesChart } from './components/sales-chart';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { AdminDashboardContent } from '@/components/AdminDashboardContent';
-
-export default function AdminDashboardPage() {
-  const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const response = await fetch('/api/auth/check', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          router.push('/unauthorized');
-          return;
-        }
-
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Auth check failed:', error);
-        router.push('/unauthorized');
-      }
-    };
-
-    checkAuth();
-  }, [router]);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
+export default function DashboardPage() {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">Dashboard</h1>
+        <div className="flex items-center space-x-2">
+          {/* Date picker or other controls could go here */}
+        </div>
       </div>
-    );
-  }
 
-  return <AdminDashboardContent />;
-} 
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <StatsCard
+          title="Total Revenue"
+          value="$45,231.89"
+          description="+20.1% from last month"
+          icon="DollarSign"
+        />
+        <StatsCard
+          title="Total Orders"
+          value="1,234"
+          description="+12% from last month"
+          icon="ShoppingCart"
+        />
+        <StatsCard
+          title="Total Books"
+          value="573"
+          description="+8 from last month"
+          icon="Book"
+        />
+        <StatsCard
+          title="Active Users"
+          value="1,129"
+          description="+18.3% from last month"
+          icon="Users"
+        />
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-7">
+        <div className="lg:col-span-4">
+          <SalesChart />
+        </div>
+        <div className="lg:col-span-3">
+          <RecentOrders />
+        </div>
+      </div>
+    </div>
+  );
+}
