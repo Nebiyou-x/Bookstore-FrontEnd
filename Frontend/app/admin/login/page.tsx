@@ -30,7 +30,7 @@ export default function LoginPage() {
         setError(data.error || 'Login failed');
       }
     } catch (err) {
-      setError('An error occurred. Please try again.');
+      setError('An error occurred. Please try again.'+ err);
     }
   };
 
