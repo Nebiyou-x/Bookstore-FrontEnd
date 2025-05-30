@@ -19,8 +19,9 @@ import {
   PaginationNext,
 } from '@/components/ui/pagination';
 import { Plus, Search } from 'lucide-react';
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, ChangeEvent } from 'react';
 import { Product } from '@/types/product.types';
+import Image from 'next/image';
 
 interface Book extends Product {
   author: string;
@@ -28,11 +29,10 @@ interface Book extends Product {
 }
 
 export default function BooksPage() {
-  const books: Book[] = [
+  const [books, setBooks] = useState<Book[]>([
     { id: 1, title: 'The Great Gatsby', author: 'F. Scott Fitzgerald', price: 12.99, stock: 45, srcUrl: '' },
     { id: 2, title: 'To Kill a Mockingbird', author: 'Harper Lee', price: 10.99, stock: 32, srcUrl: '' },
-    
-  ];
+  ]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
@@ -40,6 +40,7 @@ export default function BooksPage() {
 
   const [showBookForm, setShowBookForm] = useState(false);
   const [editingBook, setEditingBook] = useState<Book | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const handleAddBookClick = () => {
     setEditingBook(null);
@@ -58,12 +59,54 @@ export default function BooksPage() {
 
   const handleSaveBook = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    
     const formData = new FormData(event.currentTarget);
     const bookData = Object.fromEntries(formData.entries());
-    console.log('Saving book:', bookData);
+    
+    if (editingBook) {
+      
+      setBooks(books.map(book => 
+        book.id === editingBook.id 
+          ? { 
+              ...book, 
+              title: bookData.title as string,
+              author: bookData.author as string,
+              price: parseFloat(bookData.price as string),
+              stock: parseInt(bookData.stock as string),
+              srcUrl: imagePreview || book.srcUrl
+            }
+          : book
+      ));
+    } else {
+      // Add new book
+      const newBook: Book = {
+        id: Math.max(...books.map(b => b.id)) + 1,
+        title: bookData.title as string,
+        author: bookData.author as string,
+        price: parseFloat(bookData.price as string),
+        stock: parseInt(bookData.stock as string),
+        srcUrl: imagePreview || ''
+      };
+      setBooks([...books, newBook]);
+    }
+
     setShowBookForm(false);
     setEditingBook(null);
+    setImagePreview(null);
+  };
+
+  const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDeleteBook = (bookId: number) => {
+    setBooks(books.filter(book => book.id !== bookId));
   };
 
   return (
@@ -80,22 +123,51 @@ export default function BooksPage() {
         <div className="border rounded-md p-4 space-y-4">
           <h2 className="text-2xl font-bold">{editingBook ? 'Edit Book' : 'Add New Book'}</h2>
           <form onSubmit={handleSaveBook} className="space-y-4">
-            <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700">Title</label>
-              <Input id="title" name="title" defaultValue={editingBook?.title} required />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="title" className="block text-sm font-medium text-gray-700">Title</label>
+                  <Input id="title" name="title" defaultValue={editingBook?.title} required />
+                </div>
+                <div>
+                  <label htmlFor="author" className="block text-sm font-medium text-gray-700">Author</label>
+                  <Input id="author" name="author" defaultValue={editingBook?.author} required />
+                </div>
+                <div>
+                  <label htmlFor="price" className="block text-sm font-medium text-gray-700">Price</label>
+                  <Input id="price" name="price" type="number" step="0.01" defaultValue={editingBook?.price} required />
+                </div>
+                <div>
+                  <label htmlFor="stock" className="block text-sm font-medium text-gray-700">Stock</label>
+                  <Input id="stock" name="stock" type="number" defaultValue={editingBook?.stock} required />
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="image" className="block text-sm font-medium text-gray-700">Book Cover Image</label>
+                  <Input 
+                    id="image" 
+                    name="image" 
+                    type="file" 
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="cursor-pointer"
+                  />
+                </div>
+                {(imagePreview || editingBook?.srcUrl) && (
+                  <div className="relative w-full h-48 border rounded-md overflow-hidden">
+                    <Image
+                      src={imagePreview || editingBook?.srcUrl || ''}
+                      alt="Book cover preview"
+                      fill
+                      className="object-contain"
+                    />
+                  </div>
+                )}
+              </div>
             </div>
-            <div>
-              <label htmlFor="author" className="block text-sm font-medium text-gray-700">Author</label>
-              <Input id="author" name="author" defaultValue={editingBook?.author} required />
-            </div>
-            <div>
-              <label htmlFor="price" className="block text-sm font-medium text-gray-700">Price</label>
-              <Input id="price" name="price" type="number" step="0.01" defaultValue={editingBook?.price} required />
-            </div>
-            <div>
-              <label htmlFor="stock" className="block text-sm font-medium text-gray-700">Stock</label>
-              <Input id="stock" name="stock" type="number" defaultValue={editingBook?.stock} required />
-            </div>
+
             <div className="flex justify-end space-x-2">
               <Button type="button" variant="outline" onClick={handleCancelClick}>Cancel</Button>
               <Button type="submit">{editingBook ? 'Save Changes' : 'Add Book'}</Button>
@@ -133,7 +205,7 @@ export default function BooksPage() {
                   <Button variant="outline" size="sm" onClick={() => handleEditBookClick(book)}>
                     Edit
                   </Button>
-                  <Button variant="destructive" size="sm">
+                  <Button variant="destructive" size="sm" onClick={() => handleDeleteBook(book.id)}>
                     Delete
                   </Button>
                 </TableCell>
